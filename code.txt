@@ -1,0 +1,204 @@
+data1=read.csv("testSamples.csv")
+data2=read.csv("transData.csv")
+data2=data2[,-1]
+a=aggregate(data2$transaction_amount, by=list(sample_id=data2$sample_id), FUN=sum)
+c= data2[,-3]
+d=unique(c)
+data.final=merge(d,a,by="sample_id")
+data.ready=merge(data.final,data1,by="sample_id")
+
+data.ready$transaction_type=factor(data.ready$transaction_type,
+                                   levels=c('REBILL', 'CHARGEBACK', 'REFUND'), 
+                                   labels=c(1,2,3))
+
+data.ready$test_group=factor(data.ready$test_group,
+                        levels=c(0,1))
+
+colnames(data.ready)<- c("Sample_id","Transaction_type","Transaction_amount","Test_group")
+
+library("MASS")
+print(str(data.ready))
+
+tabs=table(data.ready$transaction_type)
+round(tabs/sum(tab), 2)
+dim(data.ready)
+
+#proportion de 0
+po=1082/2725
+round(po,2)
+#proportion de 1
+p1=1643/2725
+round(p1,2)
+require(ggplot2)
+ggplot(data.ready, aes(x = test_group)) + geom_bar()
+
+
+
+plot(0:2725,dbinom(0:2725,size=2725,prob=0.6),type="l",
+     xlab = "number of members",
+     ylab = "Probability",col=10)
+lines(0:2725,dbinom(0:2725,size=2725,prob=0.4),type="l",
+      xlab = "number of members",
+      ylab = "Probability",col="blue4")
+legend("bottomright",c("Test Group","Control Group"),lwd=c(1,1), lty=c(6,6),pt.cex=0.8,col=c(10, "blue4") )
+par(family="times new roman",font=1,ps = 14, cex = 1, cex.main = 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#propability distribution of the number of individual in the test group out of 2725
+dbinom(0:2725,size=2725,prob=0.6)
+plot(0:2725,dbinom(0:2725,size=2725,prob=0.6),type="l",
+     xlab = "number of 1",
+     ylab = "probability that this occurs",col=2)
+
+dbinom(1643,size=2725,prob=0.6)
+dbinom(1082,size=2725,prob=0.4)
+
+
+tab=with(data.ready, table(test_group, transaction_type))
+round(tab/sum(tab), 2)
+
+#Is a user that must call-in to cancel more likely to generate at least 1 addition REBILL?
+https://sebastiansauer.github.io/percentage_plot_ggplot2_V2/
+
+library(ggplot2)
+ggplot(data.ready, aes(x = Test_group, fill = Transaction_type)) + geom_bar()
+#ggplot(data.ready, aes(x = Test_group, fill = Transaction_type)) + geom_bar(position = "fill")
+
+
+tbl = table(data.ready$Test_group,data.ready$Transaction_type) 
+tbl
+round(tbl/sum(tbl), 2)
+chisq.test(data.ready$Transaction_type, data.ready$Test_group, correct=FALSE)
+
+#We have a chi-squared value of 51.343. Since we get a p-Value less than
+#the significance level of 0.05,we reject the null hypothesis and conclude that
+#the two variables are in fact dependent.So we reject the null hypothesis and 
+#conclude that CHARGEBACK and Test Control have a significant relationship
+
+#Is a user that must call-in to cancel more likely to generate more revenues?
+
+ggplot(data.ready, aes(x = Test_group, fill =Transaction_amount)) + geom_bar()
+names(data.ready)
+tbl = table(data.ready$Test_group,data.ready$Transaction_amount) 
+tbl
+round(tbl/sum(tbl), 2)
+chisq.test(data.ready$Transaction_amount, data.ready$Test_group, correct=F)
+
+
+#Feature Scaling
+data.ready$Transaction_amount=scale(data.ready$Transaction_amount)
+
+
+levels(data.ready$Transaction_type)
+levels(data.ready$Test_group)
+
+coag.lm <- lm(Transaction_amount~Test_group,data =data.ready)
+summary(coag.lm)
+anova(coag.lm) 
+
+
+
+ coag.lm <- lm(Transaction_amount~Test_group+Transaction_type,data =data.ready)
+ summary(coag.lm)
+ anova(coag.lm) 
+
+ res<-residuals(coag.lm)
+ plot(coag.lm,1)
+
+install.packages("ggpubr")
+ library(ggpubr)
+ ggboxplot(data.ready, x = "Test_group", y = "Transaction_amount", 
+           color = "Test_group", palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+           order = c(0,1),
+           ylab = "Transaction amount", xlab = "Test group")
+
+
+
+
+ # Compute the analysis of variance
+ res.aov <- aov(Transaction_amount~Test_group,data =data.ready)
+ # Summary of the analysis
+ summary(res.aov)
+ plot(res.aov, 1)
+ plot(res.aov, 2)
+
+ Extract the residuals
+ aov_residuals <- residuals(object = res.aov )
+ # Run Shapiro-Wilk test
+ shapiro.test(x = aov_residuals )
+
+# http://www.statisticshowto.com/balanced-and-unbalanced-designs/
+ #http://www.sthda.com/english/wiki/two-way-anova-test-in-r
+ install.packages("car")
+ library(car)
+ Anova(res.aov, type = "III")
+
+
+
+
+
+
+boxcox(Transaction_amount~Test_group,data =data.ready)
+
+
+
+
+
+
+
+
+lines(g,col=3)
+dbinom(1082 , 2725, 0.50)
+dbinom(64 , 172, 0.10)
+#http://www-personal.umich.edu/~ladamic/courses/SI544/si544w08/lectures/lecture4discreteDistributionsR.pdf
+
+dbinom(1082 , 1:2725, 0.40)
+dbinom(1643 , 1:2725, 0.60)
+
+
+
+
+dbinom(1:2725,size=1643 , prob=0.60)
+
+plot(data.ready$test_group,dbinom(1:2725 , 1:2725, prob=0.60))
+
+
+
+
+
+
+
+x_a =  1:10000
+y_a = dbinom(x_a, 10000, 0.01)
+
+data = data.frame(x_a=x_a, area=append(rep(0, 119), seq(from=120, to=10000, by=1)), y_a=y_a)
+
+options(repr.plot.width=7, repr.plot.height=3)
+ggplot(data = data)+
+  labs(x="Number of successes", y="Probability") + xlim(50, 150) +
+  geom_point(aes(x=x_a, y=y_a)) + geom_area(aes(x=area, y=y_a), colour="green", fill="green")
+
+
+
+
+
+
+
+
+
