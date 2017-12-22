@@ -1,0 +1,157 @@
+
+####DATA PREPROCESSING#########################################
+
+data1=read.csv("testSamples.csv")
+data2=read.csv("transData.csv")
+data2=data2[,-1]
+a=aggregate(data2$transaction_amount, by=list(sample_id=data2$sample_id), FUN=sum)
+
+c= data2[,-3]
+d=unique(c)
+data_f=merge(d,a,by="sample_id")
+data.ready=merge(data_f,data1,by="sample_id")
+
+data.ready$test_group=factor(data.ready$test_group,
+                             levels=c(0,1),
+                             labels=c('Control_group', 'Test_group'))
+
+colnames(data.ready)<- c("Sample_id","Transaction_type","Transaction_amount","Test_group")
+
+library("MASS")
+print(str(data.ready))
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+# Question 1 - What is the aproximate probability distribution between the test group and the control group
+
+#please, run the following code
+tabs=table(data1$test_group)
+dim(data1)
+#proportion of 0 (Control group)
+po=44886/59721
+round(po,2)
+#proportion of 1 (Test group)
+p1=14835/59721
+round(p1,2)
+
+sum(dbinom(25:100,size=100,prob=0.25))
+
+# Answer to Question 1
+
+#Out of the total of 59721 (100%) members,
+#there are 44886 (75%) in the Control group
+#and 14835 (25%) in the test group.
+
+#In the data set data1, we observe 14835(25%) out of 59721 (100%)  members who cancelled their service by calling in. 
+#and 44886 (75%) of the total members who cancelled their service by using a web form.
+
+# So to find the aproximate probability distribution between the test group and the control group,
+#I ask myself the following question:
+#What's the probability of having "at least" 25 successes 
+#out of 100 given that the probability of success (proportion of 1) is 0.25?
+# Since we have a binary outcome, I used the binomial probability distribution
+# I compute P(25 < X < 100) for X Binomial(100,0.5).
+#So my results show that the probability distribution
+#between the test group and the control group is approximativily 0.54.
+
+
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+
+# Question 2 - Is a user that must call-in to cancel more likely to generate atleast 1 addition REBILL?
+
+#please, run the following code
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(scales)  
+
+#bar plot
+bp <- ggplot(data.ready, aes(x = Test_group, group = Transaction_type)) + 
+  geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+  geom_text(aes( label = scales::percent(..prop..),
+                 y= ..prop.. ), stat= "count", vjust = -.5) +
+  labs(y = "Percent", fill="Test_group") +
+  facet_grid(~Transaction_type) +
+  scale_y_continuous(labels = scales::percent)
+bp + scale_fill_discrete(breaks=c("Test_Group","Control_group"))
+#Contingency Table
+tbl = table(data.ready$Test_group,data.ready$Transaction_type) 
+100*prop.table(tbl, margin=2)
+
+
+#Chi-squared test of independence
+chisq.test(data.ready$Transaction_type, data.ready$Test_group, correct=FALSE)
+
+# Answer to Question 2
+
+#Yes, as we can see in the frequency bar plot, the proportion of the recurring payments (Rebills)
+#is higher for members who cancelled their service by calling in (Test_group, 62.3%) than for members
+#who cancel their service by using a web form (Control Group,37.7%).
+#In other words, this means that the members who to choose to cancel their service by calling in
+#are more likely to generate additional Rebills.
+
+#To ensure the validity of my results, I used the Chi-squared test of independence
+#because is is a statistical tool to determine if categorical variables have a significant
+#correlation between them.
+#So, the Chi-square test of independence will tells us whether the results observed
+#in the sample (data.ready) are true 'in the sample' only because of random effects or are true beyond the sample
+#in the total population.
+
+# As we can see, We have a chi-squared value of 51.343 and a p-Value less than
+#the significance level of 0.05. Therefore we reject the null hypothesis and conclude that
+#a user that must call-in to cancel is more likely to generate
+#at leat one addition Rebill than a useru user who can cancel by using a web form.
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+
+# Question 3 - Is a user that must call-in to cancel more likely to generate more revenues?
+
+#please, run the following code
+chisq.test(data.ready$Transaction_type, data.ready$Test_group, correct=FALSE)
+
+# Answer to Question 3
+#Among all the users (please see the bar plot in question 2), the proportion of members who cancelled
+#their subscription service (Chargeback or refund) is much higher among those who choose to cancel their service 
+#by using the web form (Control group) than those who choose to cancel by callin in (Test_group).
+# It s well known that Chargebacks can lead to major losses for the company.
+# Given that that  the proportion of chargebacks and refunds are greater for the Control group,
+#and given that the proportion of REBILLS (recurring payments) is greater for the test_group
+#we can predict that the users who choose to cancel their service by calling in are more likely to minimize losses
+#and therefore, they are more likely to generate more revenue.
+
+# I used the Chi-squared test of independence and as we can see the null hupothesis is strongly rejected.
+#which aslo imply that a user that must call-in to cancel more likely to generate more revenues.
+
+
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+# Question 4 -Is a user that must call-in more likely to produce a higher chargeback rate(CHARGEBACKs/REBILLs)?
+
+#please, run the following code
+#Contingency Table
+tbl = table(data.ready$Test_group,data.ready$Transaction_type)
+tbl
+# Answer to Question 2
+#Using the Contingency table , I calculate the chargeback rate for the 2 groups of users.
+# Chargeback rate for Control_group : (53/941)*100=5,6%
+# Chargeback rate for Test_group: (29/1556)*100=1,86%
+# As we can see, the chargeback rate is higher for users that must call-in than for user that must use web page.
+
+
+
+
+
+
+
+
+
+
+
